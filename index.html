@@ -1,0 +1,36 @@
+<meta http-equiv="Content-Type"  content="text/html charset=UTF-8" />
+<html>
+  <head>
+    <script src="./jquery-2.2.1.min.js"></script>
+    <script src="./jquery-ui.min.js"></script>
+    <script src="./bootstrap/js/bootstrap.min.js"></script>
+    <script src="./bootstrap/bootstrap-dialog.min.js"></script>
+    <script src="./bootstrap/bootstrap-slider.min.js"></script>
+
+    <script src="./sylvester.js"></script>
+    <script src="./math.min.js"></script>
+    <script src="./jsxgraphcore.js"></script>
+    <script src="./main.js"></script>
+    <script src="./interface.js"></script>
+
+    <link href="./bootstrap/css/bootstrap.min.css" rel="stylesheet" type="text/css">
+    <link href="./bootstrap/bootstrap-dialog.min.css" rel="stylesheet" type="text/css">
+    <link href="./jsxgraph.css" rel="stylesheet" type="text/css">
+    <link href="./main.css" rel="stylesheet" type="text/css">
+  </head>
+  <body>
+    <div class="col-md-12 header">
+      <div class="col-md-4"><h3>Matrix Transformations</h3></div>
+      <div class="col-md-5 headerContainer">
+        <button class="btn btn-success" onClick="newShape()"><span class="glyphicon glyphicon-star"></span> New Shape</button>
+        <button class="btn btn-info" onClick="editMatrix()"><span class="glyphicon glyphicon-edit"></span> Matrix Transformer</button>
+        <button class="btn btn-warning" onClick="transformations()"><span class="glyphicon glyphicon-cog"></span> Transformations</button>
+      </div>
+      <div class="col-md-3 headerContainer" style="text-align: right">
+      <button class="btn btn-primary" onClick="help()"><span class="glyphicon glyphicon-book"></span> Help</button>
+        <button class="btn btn-primary" onClick="developers()"><span class="glyphicon glyphicon-console"></span> Developers</button>
+      </div>
+    </div>
+    <div id="graphWindow" class="jxgbox"></div>
+  </body>
+</html>
