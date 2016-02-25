@@ -23,9 +23,9 @@ $(window).load(function() {
   cursorPoint.showInfobox = false;
   cursorPoint.isDraggable = false;
   cursorPoint.visible(false);
-  closestOriginalPoint = board.create('point', [0,0], { size: 2, color: '#ff55ff', name:""});
+  closestOriginalPoint = board.create('point', [0,0], { size: 3, color: '#ff55ff', name:""});
   closestOriginalPoint.isDraggable = false;
-  connectedClonePoint = board.create('point', [0,0], {size: 2, color: '#aa33bb', name:""})
+  connectedClonePoint = board.create('point', [0,0], {size: 3, color: '#aa33bb', name:""})
   connectedClonePoint.isDraggable = false;
   connectLine = board.create('line', [closestOriginalPoint, connectedClonePoint], { color: '#aaaaaa', straightLast: false, straightFirst: false});
   board.on('mousemove', function(e) {

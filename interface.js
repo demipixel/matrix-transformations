@@ -91,12 +91,16 @@ function newShape() {
 
 var matrixInput = [[1, 0, 0], [0, 1, 0]];
 var threeSizeMatrix = false;
-function editMatrix(err, attempt) {
+function editMatrix(err, attempt, errIndex) {
   var str = '';
-  for (var i = 0; i < 2; i++) {
+  for (var i = 0; i < (threeSizeMatrix?3:2); i++) {
     str += '<div>';
     for (var j = 0; j < (threeSizeMatrix ? 3 : 2); j++) {
-      str += '<div data-row='+i+' data-col='+j+' class="editmatrix col-md-'+(threeSizeMatrix?4:6)+'"><input class="form-control" value="'+(attempt?attempt[i][j]:matrixInput[i][j])+'"></div>';
+      var input;
+      var style = i == 2 ? ' style="padding-left:25px"' : '';
+      if (i < 2) input = '<input class="form-control" value="'+(attempt?attempt[i][j]:matrixInput[i][j])+'">';
+      else input = (j < 2 ? 0 : 1);
+      str += '<div data-row='+i+' data-col='+j+' class="matrix-'+i+'-'+j+' editmatrix col-md-'+(threeSizeMatrix?4:6)+'"'+style+'>'+input+'</div>';
     }
     str += '</div><br><br>';
   }
@@ -131,6 +135,7 @@ function editMatrix(err, attempt) {
       action: function(dialog) {
         var matrix = [[1, 0, 0], [0, 1, 0]];
         var error = null;
+        var errorI = -1;
         $('.editmatrix input').each(function(index, element) {
           $e = $(element);
           var row = $e.parent().data('row');
@@ -140,19 +145,23 @@ function editMatrix(err, attempt) {
           try {
             math.eval($e.val());
           } catch(err) {
+            errorI = [row, col];
             error = err;
           }
         });
         if (error) {
           dialog.close();
-          return editMatrix(error, matrix);
+          return editMatrix(error, matrix, errorI);
         } else {
           matrixInput = matrix;
           processMatrix();
         }
         dialog.close();
       }
-    }]
+    }],
+    onshown: function(dialog) {
+      if (errIndex) $(dialog.getModalBody().find('.matrix-'+errIndex[0]+'-'+errIndex[1])).find('input').select();
+    }
   });
 }
 
@@ -267,7 +276,7 @@ function generateTransformation(id, data) {
   else if (id == 3) matrix = [[data, 0, 0], [0, 1, 0]];
   else if (id == 4) matrix = [[1, 0, 0], [0, data, 0]];
   else if (id == 5) matrix = [[1, data, 0], [0, 1, 0]];
-  else if (id == 6) matrix = [[1, 0, 0], [0, data, 0]];
+  else if (id == 6) matrix = [[1, 0, 0], [data, 1, 0]];
   else if (id == 7) matrix = [[Math.cos(data), -Math.sin(data), 0], [Math.sin(data), Math.cos(data), 0]];
   else if (id == 8) matrix = [[1, 0, data], [0, 1, 0]];
   else if (id == 9) matrix = [[1, 0, 0], [0, 1, data]];
@@ -306,6 +315,9 @@ function displayTransformation() {
   var out = trans.matrix.multiply(getEvalMatrix());
   out = out.map(function(item) { return Math.round(item*1000)/1000; });
   matrixInput = out.elements.slice(0, 2);
+  var BEFORE_TIME = 3000;
+  var ANIMATION_TIME = 500;
+  var AFTER_TIME = 3000;
   BootstrapDialog.show({
     size: BootstrapDialog.SIZE_WIDE,
     type: BootstrapDialog.TYPE_Primary,
@@ -317,18 +329,18 @@ function displayTransformation() {
         for (var i = 0; i < 2; i++) {
           $('.tableDisplay.'+(i==0?'left':'right')).animate({
             left: (i==0?'+':'-') + '=160'
-          }, 500, 'easeInQuad', function() {
+          }, ANIMATION_TIME, 'easeInQuad', function() {
             if ($(this).hasClass('right')) {
               $(this).html(genTable(out, threeSizeMatrix));
             } else $(this).html('');
             $('.glyphicon-remove').removeClass('glyphicon-remove glyphicon');
           });
         }
-      }, 2000);
+      }, BEFORE_TIME);
       setTimeout(function() {
         dialog.close();
         displayTransformation();
-      }, 2000+500+2000);
+      }, BEFORE_TIME+ANIMATION_TIME+AFTER_TIME);
     }
   });
 }
