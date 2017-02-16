@@ -1,6 +1,7 @@
 
 var currShape = [];
 var currMatrix = $M([[1, 0, 0],[0, 1, 0],[0, 0, 1]]);
+var polar = false;
 var board;
 
 var originalItems = { lines: [], points: [] };
@@ -82,7 +83,11 @@ $(window).load(function() {
 
     if (closest) {
       closestOriginalPoint.setPosition(JXG.COORDS_BY_USER, [closest[1], closest[2]]);
-      var updatedMatrix = currMatrix.multiply($M([[closest[1]], [closest[2]], [1]]));
+      var x = closest[1];
+      var y = closest[2];
+      var m = convertMatrix($M([[x], [y], [1]]), true);
+      var updatedMatrix = currMatrix.multiply(m);
+      updatedMatrix = convertMatrix(updatedMatrix, false);
       if (updatedMatrix) {
         connectedClonePoint.setPosition(JXG.COORDS_BY_USER, updatedMatrix.col(1).elements.slice(0, 2));
       }
@@ -97,7 +102,10 @@ function setShape(shape) {
     currShape = originalMatrix.transpose().elements.map(function(i) { return i.slice(0, 2); });
   }
   loadShape(currShape);
-  loadShape(currMatrix.multiply(originalMatrix).transpose().elements.map(function(i) { return i.slice(0, 2); }), true);
+  var dupe = convertMatrix(originalMatrix, true);
+  dupe = currMatrix.multiply(dupe);
+  dupe = convertMatrix(dupe, false);
+  loadShape(dupe.transpose().elements.map(function(i) { return i.slice(0, 2); }), true);
 }
 
 $(window).resize(function() {
@@ -136,6 +144,11 @@ function loadShape(points, clone) {
     var point2Index = (index+1)%arr.points.length;
     var point2 = arr.points[point2Index];
     var line = board.create('line', [point, point2], opt);
+    if (polar) {
+      var p = [point, cursorPoint, point2];
+      var c = board.create('curve', JXG.Math.Numerics.bezier(p), {strokeColor:'red', name:"curve", strokeWidth:5, fixed: false});
+      c.addParents(p);
+    }
     if (!clone) setLineEvents(line, point, index, point2, point2Index);
     else line.isDraggable = false;
     arr.lines.push(line);
@@ -160,18 +173,28 @@ function setLineEvents(line, point1, index1, point2, index2) {
 
 function updatePoint(point, index) {
   if (!cloneItems.points[index] || !originalMatrix) return;
-    var newOriginalMatrix = originalMatrix.transpose();
-    newOriginalMatrix.elements[index][0] = point.X();
-    newOriginalMatrix.elements[index][1] = point.Y();
-    originalMatrix = newOriginalMatrix.transpose();
-    var updatedMatrix = currMatrix.multiply(originalMatrix);
-    cloneItems.points[index].setPosition(JXG.COORDS_BY_USER, updatedMatrix.col(index+1).elements.slice(0, 2));
+  //console.log(originalMatrix.inspect());
+  //console.log('Before')
+  var newOriginalMatrix = originalMatrix.transpose();
+  newOriginalMatrix.elements[index][0] = point.X();
+  newOriginalMatrix.elements[index][1] = point.Y();
+  originalMatrix = newOriginalMatrix.transpose();
+  var dupe = convertMatrix(originalMatrix, true, index);
+  var updatedMatrix = currMatrix.multiply(dupe);
+  updatedMatrix = convertMatrix(updatedMatrix, false, index);
+  cloneItems.points[index].setPosition(JXG.COORDS_BY_USER, updatedMatrix.col(index+1).elements.slice(0, 2));
 }
 
 function updateAllPoints() {
   originalItems.points.forEach(function(point, index) {
     updatePoint(point, index);
   });
+}
+
+function togglePolar() {
+  polar = !polar;
+  console.log('Polar is now '+(polar?'on':'off'));
+  setShape();
 }
 
 function getMouseCoords(e, i) {
@@ -181,4 +204,27 @@ function getMouseCoords(e, i) {
       dy = absPos[1]-cPos[1];
 
   return new JXG.Coords(JXG.COORDS_BY_SCREEN, [dx, dy], board);
+}
+
+function convertMatrix(matrix, toPolar, singlePoint) {
+  if (!polar) return matrix.dup();
+  if (toPolar) {
+    return matrix.map(function(e, r, c) {
+      if (singlePoint != undefined && c != singlePoint+1) return e;
+      var x = matrix.e(1, c);
+      var y = matrix.e(2, c);
+      if (r == 1) return Math.sqrt(x*x + y*y);
+      else if (r == 2) return Math.atan2(y, x);
+      else return e;
+    });
+  } else {
+    return matrix.map(function(e, r, c) {
+      if (singlePoint != undefined && c != singlePoint+1) return e;
+      var radius = matrix.e(1, c);
+      var theta = matrix.e(2, c);
+      if (r == 1) return Math.cos(theta) * radius;
+      else if (r == 2) return Math.sin(theta) * radius;
+      else return e;
+    });
+  }
 }

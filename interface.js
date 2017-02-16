@@ -53,7 +53,7 @@ function developers() {
 }
 
 function newShape() {
-  var shapes = ['Square', 'Circle', 'Star'];
+  var shapes = ['Square', 'Circle', 'Star', 'Custom'];
   var str = '';
   shapes.forEach(function(shape, index) {
     str += '<button class="btn btn-primary newshape" data-id="'+index+'">'+shape+'</button><br>';
@@ -84,7 +84,97 @@ function newShape() {
       $(dialog.getModalBody().find('.newshape')).click(function() {
         $(dialog.getModalBody().find('.btn-warning')).removeClass('btn-warning').addClass('btn-primary');
         $(this).removeClass('btn-primary').addClass('btn-warning');
+        if ($(this).text() == 'Custom') {
+          dialog.close();
+          customShape();
+        }
       });
+    }
+  });
+}
+
+var EMPTY_NEW_CUSTOM_POINT = '<div class="custom-point col-md-12" style="margin-bottom: 5px">';
+EMPTY_NEW_CUSTOM_POINT += '<div class="col-md-4"><input class="form-control point-1"></div>';
+EMPTY_NEW_CUSTOM_POINT += '<div class="col-md-4"><input class="form-control point-2"></div>';
+EMPTY_NEW_CUSTOM_POINT += '<div class="col-md-4"><button class="btn btn-danger" onClick=$(this).parent().parent().remove()>Remove</div>';
+EMPTY_NEW_CUSTOM_POINT += '</div>';
+function customShape() {
+  var str = '';
+  str += '<div class="error-panel alert alert-danger" style="display: none"></div>';
+  str += '<button class="btn btn-danger clear-custom-shape" style="width: 100%">Clear</button><br><br>';
+  str += '<div class="custom-points">';
+  str += EMPTY_NEW_CUSTOM_POINT;
+  str += '</div>';
+  str += '<button class="btn btn-success new-custom-point" style="width: 100%; margin-top: 10px">New Point</button>';
+  BootstrapDialog.show({
+    size: BootstrapDialog.SIZE_NORMAL,
+    type: BootstrapDialog.TYPE_SUCCESS,
+    title: 'New Custom Shape',
+    message: str,
+    buttons: [{
+      label: 'Cancel',
+      action: function(dialog) {
+        dialog.close();
+      }
+    }, {
+      label: 'Back',
+      cssClass: 'btn-warning',
+      action: function(dialog) {
+        dialog.close();
+        newShape();
+      }
+    }, {
+      label: 'Submit',
+      cssClass: 'btn-success',
+      action: function(dialog) {
+        var points = [];
+        var close = true;
+        dialog.getModalBody().find('.custom-point').each(function(index, element) {
+          $e = $(element);
+          var xVal = $e.find('.point-1').val();
+          var yVal = $e.find('.point-2').val()
+          var x;
+          var y;
+          try {
+            x = math.eval(xVal);
+            y = math.eval(yVal);
+          } catch(err) {
+            dialog.getModalBody().find('.error-panel').text(err).show();
+            close = false;
+            return;
+          }
+
+          if (x !== undefined && y !== undefined) points.push([typeof x == 'object' ? x.value : x, typeof y == 'object' ? y.value : y]);
+        });
+        if (close) {
+          if (points.length) setShape(points);
+          dialog.close();
+        }
+      }
+    }],
+    onshow: function(dialog) {
+      var modalBody = dialog.getModalBody();
+      var $customPoints = modalBody.find('.custom-points');
+      modalBody.find('.custom-point .col-md-4 .btn-danger').remove();
+      modalBody.find('.clear-custom-shape').click(function() {
+        $customPoints.empty().append(EMPTY_NEW_CUSTOM_POINT);
+        modalBody.find('.custom-point .col-md-4 .btn-danger').remove();
+      });
+      modalBody.find('.new-custom-point').click(function() {
+        $customPoints.append(EMPTY_NEW_CUSTOM_POINT);
+      });
+      if (originalItems.points.length) {
+        $customPoints.empty();
+        originalItems.points.forEach(function(point, i) {
+          $point = $(EMPTY_NEW_CUSTOM_POINT);
+          $point.find('.point-1').val(Math.round(point.X()*1000)/1000);
+          $point.find('.point-2').val(Math.round(point.Y()*1000/1000));
+          $customPoints.append($point);
+          if (i == 0) {
+            modalBody.find('.custom-point .col-md-4 .btn-danger').remove();
+          }
+        });
+      }
     }
   });
 }
